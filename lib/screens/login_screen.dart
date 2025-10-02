@@ -15,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -28,12 +29,18 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              const Icon(
+                Icons.directions_walk,
+                size: 80,
+                color: Color(0xFF0066CC),
+              ),
+              const SizedBox(height: 16),
               const Text(
                 'SafeRoad',
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryColor,
+                  color: Color(0xFF0066CC),
                 ),
               ),
               const SizedBox(height: 8),
@@ -42,7 +49,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 32),
-              
               TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(
@@ -60,7 +66,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              
               TextFormField(
                 controller: _passwordController,
                 obscureText: true,
@@ -79,35 +84,44 @@ class _LoginScreenState extends State<LoginScreen> {
                 },
               ),
               const SizedBox(height: 24),
-              
-              ElevatedButton(
-                onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    try {
-                      await authService.signInWithEmailAndPassword(
-                        _emailController.text,
-                        _passwordController.text,
-                      );
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => const MapScreen()),
-                      );
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error al iniciar sesión: $e')),
-                      );
-                    }
-                  }
-                },
-                child: const Text('Iniciar Sesión'),
-              ),
+              _isLoading
+                  ? const CircularProgressIndicator()
+                  : ElevatedButton(
+                      onPressed: () async {
+                        if (_formKey.currentState!.validate()) {
+                          setState(() {
+                            _isLoading = true;
+                          });
+                          try {
+                            await authService.signInWithEmailAndPassword(
+                              _emailController.text,
+                              _passwordController.text,
+                            );
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const MapScreen()),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error: $e')),
+                            );
+                          } finally {
+                            setState(() {
+                              _isLoading = false;
+                            });
+                          }
+                        }
+                      },
+                      child: const Text('Iniciar Sesión'),
+                    ),
               const SizedBox(height: 16),
-              
               TextButton(
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const RegisterScreen()),
                   );
                 },
                 child: const Text('¿No tienes cuenta? Regístrate'),

@@ -5,7 +5,7 @@ class AppTheme {
   static const Color secondaryColor = Color(0xFF00CC66);
   static const Color errorColor = Color(0xFFCC0000);
   static const Color warningColor = Color(0xFFFFCC00);
-  
+
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
@@ -15,14 +15,6 @@ class AppTheme {
         secondary: secondaryColor,
         error: errorColor,
         brightness: Brightness.light,
-      ),
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-        displayMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-        titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
-        titleMedium: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        bodyLarge: TextStyle(fontSize: 16),
-        bodyMedium: TextStyle(fontSize: 14),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: primaryColor,
@@ -35,16 +27,6 @@ class AppTheme {
         ),
         filled: true,
         fillColor: Colors.grey[50],
-      ),
-    );
-  }
-
-  static ThemeData get darkTheme {
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: primaryColor,
-        brightness: Brightness.dark,
       ),
     );
   }

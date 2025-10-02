@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:saferoad/models/report.dart';
-import 'package:saferoad/models/traffic_light.dart';
-import 'package:saferoad/services/maps_service.dart';
-import 'package:saferoad/services/notification_service.dart';
 import 'package:saferoad/screens/report_screen.dart';
 import 'package:saferoad/screens/profile_screen.dart';
+import 'package:saferoad/services/firestore_service.dart';
+import 'package:saferoad/models/report.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -16,99 +13,139 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  late GoogleMapController _mapController;
-  final Map<String, Marker> _markers = {};
-  final Map<String, Circle> _circles = {};
   int _currentIndex = 0;
+  List<Report> _reports = [];
 
   @override
   void initState() {
     super.initState();
-    _loadMarkers();
-    _setupNotifications();
+    _loadReports();
   }
 
-  void _loadMarkers() async {
-    final mapsService = Provider.of<MapsService>(context, listen: false);
-    
-    // Cargar reportes
-    final reports = await mapsService.getActiveReports();
-    for (Report report in reports) {
-      final marker = Marker(
-        markerId: MarkerId('report_${report.id}'),
-        position: LatLng(report.ubicacion.lat, report.ubicacion.lng),
-        icon: BitmapDescriptor.defaultMarkerWithHue(
-          _getMarkerHue(report.nivelPeligro),
-        ),
-        infoWindow: InfoWindow(
-          title: report.tipo,
-          snippet: 'Nivel de peligro: ${report.nivelPeligro}',
-        ),
-      );
-      _markers[marker.markerId.value] = marker;
-
-      // Agregar círculo de peligro
-      final circle = Circle(
-        circleId: CircleId('circle_${report.id}'),
-        center: LatLng(report.ubicacion.lat, report.ubicacion.lng),
-        radius: report.nivelPeligro * 100, // Radio proporcional al peligro
-        fillColor: report.colorPeligro.withOpacity(0.2),
-        strokeColor: report.colorPeligro,
-        strokeWidth: 2,
-      );
-      _circles[circle.circleId.value] = circle;
-    }
-
-    // Cargar semáforos
-    final trafficLights = await mapsService.getTrafficLights();
-    for (TrafficLight light in trafficLights) {
-      final marker = Marker(
-        markerId: MarkerId('light_${light.id}'),
-        position: LatLng(light.ubicacion.lat, light.ubicacion.lng),
-        icon: BitmapDescriptor.defaultMarkerWithHue(
-          _getLightHue(light.estado),
-        ),
-        infoWindow: InfoWindow(
-          title: 'Semáforo',
-          snippet: 'Estado: ${light.estado}',
-        ),
-      );
-      _markers[marker.markerId.value] = marker;
-    }
-
-    setState(() {});
+  void _loadReports() async {
+    final firestoreService =
+        Provider.of<FirestoreService>(context, listen: false);
+    final reports = await firestoreService.getActiveReports();
+    setState(() {
+      _reports = reports;
+    });
   }
 
-  double _getMarkerHue(int nivelPeligro) {
-    switch (nivelPeligro) {
-      case 3: return BitmapDescriptor.hueRed;
-      case 2: return BitmapDescriptor.hueOrange;
-      case 1: return BitmapDescriptor.hueGreen;
-      default: return BitmapDescriptor.hueBlue;
-    }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('SafeRoad'),
+        backgroundColor: const Color(0xFF0066CC),
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadReports,
+          ),
+        ],
+      ),
+      body: _buildCurrentScreen(),
+      floatingActionButton: _currentIndex == 0
+          ? FloatingActionButton(
+              onPressed: _showCruceSeguroDialog,
+              child: const Icon(Icons.directions_walk),
+            )
+          : null,
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.map),
+            label: 'Mapa',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.report),
+            label: 'Reportar',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Perfil',
+          ),
+        ],
+      ),
+    );
   }
 
-  double _getLightHue(String estado) {
-    switch (estado) {
-      case 'rojo': return BitmapDescriptor.hueRed;
-      case 'amarillo': return BitmapDescriptor.hueYellow;
-      case 'verde': return BitmapDescriptor.hueGreen;
-      default: return BitmapDescriptor.hueBlue;
+  Widget _buildCurrentScreen() {
+    switch (_currentIndex) {
+      case 0:
+        return _buildMapScreen();
+      case 1:
+        return const ReportScreen();
+      case 2:
+        return const ProfileScreen();
+      default:
+        return _buildMapScreen();
     }
   }
 
-  void _setupNotifications() {
-    final notificationService = Provider.of<NotificationService>(context, listen: false);
-    notificationService.initialize();
-    notificationService.setupProximityAlerts();
+  Widget _buildMapScreen() {
+    return Column(
+      children: [
+        // Mapa simulado
+        Container(
+          height: 300,
+          color: Colors.grey[200],
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.map, size: 50, color: Colors.grey),
+                const SizedBox(height: 10),
+                const Text('Mapa en Desarrollo'),
+                const SizedBox(height: 5),
+                Text('${_reports.length} reportes activos'),
+              ],
+            ),
+          ),
+        ),
+
+        // Lista de reportes
+        Expanded(
+          child: _reports.isEmpty
+              ? const Center(
+                  child: Text('No hay reportes activos'),
+                )
+              : ListView.builder(
+                  itemCount: _reports.length,
+                  itemBuilder: (context, index) {
+                    final report = _reports[index];
+                    return _buildReportCard(report);
+                  },
+                ),
+        ),
+      ],
+    );
   }
 
-  void _onMapCreated(GoogleMapController controller) {
-    _mapController = controller;
-  }
-
-  void _onCruceSeguroPressed() {
-    _showCruceSeguroDialog();
+  Widget _buildReportCard(Report report) {
+    return Card(
+      margin: const EdgeInsets.all(8),
+      child: ListTile(
+        leading: Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            color: report.colorPeligro,
+            shape: BoxShape.circle,
+          ),
+        ),
+        title: Text(report.tipo),
+        subtitle: Text(report.descripcion ?? 'Sin descripción'),
+        trailing: Text(report.textoPeligro),
+      ),
+    );
   }
 
   void _showCruceSeguroDialog() {
@@ -117,7 +154,7 @@ class _MapScreenState extends State<MapScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Cruzar Seguro'),
-          content: const Text('¿Desea solicitar un cruce seguro? El semáforo más cercano se pondrá en rojo para los vehículos.'),
+          content: const Text('¿Desea solicitar un cruce seguro?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -137,81 +174,18 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _requestCrossing() async {
-    final mapsService = Provider.of<MapsService>(context, listen: false);
+    final firestoreService =
+        Provider.of<FirestoreService>(context, listen: false);
     try {
-      await mapsService.requestSafeCrossing();
+      await firestoreService.addCrossRequest('semaforo_simulado');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Solicitud enviada. Espere la confirmación.')),
+        const SnackBar(
+            content: Text('Solicitud enviada. Espere la confirmación.')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('SafeRoad'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {
-              // Navegar a notificaciones
-            },
-          ),
-        ],
-      ),
-      body: GoogleMap(
-        onMapCreated: _onMapCreated,
-        initialCameraPosition: const CameraPosition(
-          target: LatLng(-34.6037, -58.3816), // Buenos Aires por defecto
-          zoom: 14,
-        ),
-        markers: _markers.values.toSet(),
-        circles: _circles.values.toSet(),
-        myLocationEnabled: true,
-        myLocationButtonEnabled: true,
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _onCruceSeguroPressed,
-        child: const Icon(Icons.directions_walk),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-          if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ReportScreen()),
-            );
-          } else if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ProfileScreen()),
-            );
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.map),
-            label: 'Mapa',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.report),
-            label: 'Reportar',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Perfil',
-          ),
-        ],
-      ),
-    );
   }
 }

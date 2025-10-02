@@ -17,13 +17,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Registrarse')),
+      appBar: AppBar(
+        title: const Text('Registrarse'),
+        backgroundColor: const Color(0xFF0066CC),
+        foregroundColor: Colors.white,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Form(
@@ -44,16 +49,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              
               TextFormField(
                 controller: _lastNameController,
                 decoration: const InputDecoration(
-                  labelText: 'Apellido',
+                  labelText: 'Apellido (opcional)',
                   prefixIcon: Icon(Icons.person_outline),
                 ),
               ),
               const SizedBox(height: 16),
-              
               TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(
@@ -71,13 +74,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              
               TextFormField(
                 controller: _passwordController,
                 obscureText: true,
                 decoration: const InputDecoration(
                   labelText: 'Contraseña',
                   prefixIcon: Icon(Icons.lock),
+                  hintText: 'Mínimo 6 caracteres',
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -90,7 +93,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              
               TextFormField(
                 controller: _confirmPasswordController,
                 obscureText: true,
@@ -106,32 +108,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 },
               ),
               const SizedBox(height: 24),
-              
-              ElevatedButton(
-                onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    try {
-                      await authService.createUserWithEmailAndPassword(
-                        _emailController.text,
-                        _passwordController.text,
-                        _nameController.text,
-                        _lastNameController.text,
-                      );
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => const MapScreen()),
-                      );
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error al registrarse: $e')),
-                      );
-                    }
-                  }
-                },
-                child: const Text('Registrarse'),
-              ),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ElevatedButton(
+                      onPressed: () async {
+                        if (_formKey.currentState!.validate()) {
+                          setState(() {
+                            _isLoading = true;
+                          });
+                          try {
+                            await authService.createUserWithEmailAndPassword(
+                              _emailController.text,
+                              _passwordController.text,
+                              _nameController.text,
+                              _lastNameController.text,
+                            );
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const MapScreen()),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error: $e')),
+                            );
+                          } finally {
+                            setState(() {
+                              _isLoading = false;
+                            });
+                          }
+                        }
+                      },
+                      child: const Text('Registrarse'),
+                    ),
               const SizedBox(height: 16),
-              
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);

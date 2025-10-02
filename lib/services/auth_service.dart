@@ -6,17 +6,15 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Stream<User?> get user => _auth.authStateChanges();
-
   Future<UserModel?> createUserWithEmailAndPassword(
-    String email, 
-    String password, 
-    String nombre, 
+    String email,
+    String password,
+    String nombre,
     String? apellido,
   ) async {
     try {
       UserCredential result = await _auth.createUserWithEmailAndPassword(
-        email: email, 
+        email: email,
         password: password,
       );
       User? user = result.user;
@@ -42,14 +40,15 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      throw Exception('Error creating user: $e');
+      throw Exception('Error al crear usuario: $e');
     }
   }
 
-  Future<UserModel?> signInWithEmailAndPassword(String email, String password) async {
+  Future<UserModel?> signInWithEmailAndPassword(
+      String email, String password) async {
     try {
       UserCredential result = await _auth.signInWithEmailAndPassword(
-        email: email, 
+        email: email,
         password: password,
       );
       User? user = result.user;
@@ -59,16 +58,21 @@ class AuthService {
           'lastLogin': Timestamp.now(),
         });
 
-        DocumentSnapshot doc = await _firestore.collection('users').doc(user.uid).get();
-        return UserModel.fromMap(doc.data() as Map<String, dynamic>);
+        DocumentSnapshot doc =
+            await _firestore.collection('users').doc(user.uid).get();
+        if (doc.exists) {
+          return UserModel.fromMap(doc.data() as Map<String, dynamic>);
+        }
       }
       return null;
     } catch (e) {
-      throw Exception('Error signing in: $e');
+      throw Exception('Error al iniciar sesión: $e');
     }
   }
 
   Future<void> signOut() async {
     await _auth.signOut();
   }
+
+  User? get currentUser => _auth.currentUser;
 }

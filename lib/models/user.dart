@@ -1,4 +1,6 @@
-class User {
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class UserModel {
   final String uid;
   final String email;
   final String nombre;
@@ -8,7 +10,7 @@ class User {
   final String estado;
   final AccessibilityConfig configAccessibilidad;
 
-  User({
+  UserModel({
     required this.uid,
     required this.email,
     required this.nombre,
@@ -19,8 +21,8 @@ class User {
     required this.configAccessibilidad,
   });
 
-  factory User.fromMap(Map<String, dynamic> data) {
-    return User(
+  factory UserModel.fromMap(Map<String, dynamic> data) {
+    return UserModel(
       uid: data['uid'] ?? '',
       email: data['email'] ?? '',
       nombre: data['nombre'] ?? '',
@@ -28,7 +30,8 @@ class User {
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       lastLogin: (data['lastLogin'] as Timestamp).toDate(),
       estado: data['estado'] ?? 'Activo',
-      configAccessibilidad: AccessibilityConfig.fromMap(data['configAccessibilidad'] ?? {}),
+      configAccessibilidad:
+          AccessibilityConfig.fromMap(data['configAccessibilidad'] ?? {}),
     );
   }
 

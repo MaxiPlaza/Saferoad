@@ -1,12 +1,15 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+
 class Report {
   final String id;
   final String userId;
   final String tipo;
   final int nivelPeligro;
   final Location ubicacion;
-  final String? fotoUrl;
   final DateTime createdAt;
   final bool activo;
+  final String? descripcion;
 
   Report({
     required this.id,
@@ -14,9 +17,9 @@ class Report {
     required this.tipo,
     required this.nivelPeligro,
     required this.ubicacion,
-    this.fotoUrl,
     required this.createdAt,
     required this.activo,
+    this.descripcion,
   });
 
   factory Report.fromMap(Map<String, dynamic> data, String id) {
@@ -26,9 +29,9 @@ class Report {
       tipo: data['tipo'] ?? '',
       nivelPeligro: data['nivelPeligro'] ?? 1,
       ubicacion: Location.fromMap(data['ubicacion'] ?? {}),
-      fotoUrl: data['fotoUrl'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       activo: data['activo'] ?? true,
+      descripcion: data['descripcion'],
     );
   }
 
@@ -38,18 +41,35 @@ class Report {
       'tipo': tipo,
       'nivelPeligro': nivelPeligro,
       'ubicacion': ubicacion.toMap(),
-      'fotoUrl': fotoUrl,
       'createdAt': Timestamp.fromDate(createdAt),
       'activo': activo,
+      'descripcion': descripcion,
     };
   }
 
   Color get colorPeligro {
     switch (nivelPeligro) {
-      case 3: return Colors.red;
-      case 2: return Colors.orange;
-      case 1: return Colors.green;
-      default: return Colors.grey;
+      case 3:
+        return Colors.red;
+      case 2:
+        return Colors.orange;
+      case 1:
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String get textoPeligro {
+    switch (nivelPeligro) {
+      case 3:
+        return 'ALTO PELIGRO';
+      case 2:
+        return 'PELIGRO MEDIO';
+      case 1:
+        return 'PELIGRO BAJO';
+      default:
+        return 'INFORMACIÓN';
     }
   }
 }

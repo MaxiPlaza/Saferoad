@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "299074642880",
+    "project_id": "saferoad-674e8",
+    "storage_bucket": "saferoad-674e8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:299074642880:android:345cc9690fe3cf48a19e25",
+        "android_client_info": {
+          "package_name": "com.example.saferoad"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6CTqclTOedvgeneHDaF4YsETnS2uvY2Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
